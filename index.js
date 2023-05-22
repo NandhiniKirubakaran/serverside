@@ -48,6 +48,31 @@ app.get('/products', async (request, response) => {
         response.send(products);
 });
 
+
+const SECRET_KEY = process.env.SECRET_KEY;
+
+const stripe = new Stripe(SECRET_KEY);
+
+app.get('/payment', async (req, res) => {
+    const { data, token } = req.body;
+    const transactionkey = uuidv4();
+    return stripe.customers.create({
+        email: token.email,
+        source: token.id,
+    }).then((customer) => {
+        stripe.charges.create({
+            amount: data.price,
+            customer: customer.id,
+            receipt_email: data.name,
+        }).then((result) => {
+            res.json(result);
+        }).catch((err) => {
+            console.log(err);
+        });
+    });
+});
+
+
 app.listen(PORT, () => console.log(`The Server Started in : ${PORT}🎊🎊`));
 
 export { client };
